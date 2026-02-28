@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hudl Club Volleyball — February Engagement</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #ff6300;
+    --agile: #ff5000;
+    --gold: #ff9200;
+    --dark-blue: #0046af;
+    --black: #101417;
+    --ink: #232a31;
+    --light-ink: #38434f;
+    --typewriter: #4e5d6c;
+    --dark-grey: #b1bcc4;
+    --grey: #edf0f2;
+    --light-grey: #f9fafb;
+    --white: #ffffff;
+    --confirm: #78a100;
+    --critical: #e81c00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--light-grey); font-family: 'DM Sans', sans-serif; color: var(--ink); }
+
+  /* LOADING */
+  #loading-page {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; background: var(--black); gap: 20px;
+  }
+  .load-logo { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: var(--white); letter-spacing: 4px; display: flex; align-items: center; gap: 10px; }
+  .load-dot { width: 9px; height: 9px; background: var(--orange); border-radius: 50%; margin-bottom: 3px; }
+  .load-msg { font-size: 14px; color: var(--typewriter); }
+  .load-bar { width: 200px; height: 3px; background: var(--light-ink); border-radius: 2px; overflow: hidden; }
+  .load-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--agile), var(--gold)); border-radius: 2px; transition: width 0.4s ease; }
+  .load-error { color: var(--critical); font-size: 13px; text-align: center; max-width: 380px; line-height: 1.6; display: none; padding: 0 20px; }
+
+  /* SELECTOR */
+  #selector-page {
+    min-height: 100vh; display: none; flex-direction: column;
+    align-items: center; justify-content: center; background: var(--black); padding: 40px 20px;
+  }
+  .sel-logo { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: var(--white); letter-spacing: 4px; display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
+  .sel-logo-dot { width: 9px; height: 9px; background: var(--orange); border-radius: 50%; margin-bottom: 3px; }
+  .sel-title { font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: var(--white); letter-spacing: 2px; text-align: center; line-height: 1; margin-bottom: 8px; }
+  .sel-sub { font-size: 14px; color: var(--typewriter); margin-bottom: 36px; text-align: center; }
+  .sel-sub b { color: var(--orange); }
+  .search-box { width: 100%; max-width: 500px; margin-bottom: 12px; }
+  .search-box input {
+    width: 100%; padding: 16px 20px;
+    background: var(--ink); border: 1px solid var(--light-ink); border-radius: 4px;
+    color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 15px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-box input:focus { border-color: var(--orange); }
+  .search-box input::placeholder { color: var(--typewriter); }
+  #club-list {
+    width: 100%; max-width: 500px; max-height: 380px; overflow-y: auto;
+    background: var(--ink); border: 1px solid var(--light-ink); border-radius: 4px;
+    scrollbar-width: thin; scrollbar-color: var(--light-ink) transparent;
+  }
+  .club-item {
+    padding: 13px 20px; cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    transition: background 0.12s; user-select: none;
+  }
+  .club-item:hover { background: rgba(255,99,0,0.13); }
+  .club-item:last-child { border-bottom: none; }
+  .club-item-name { color: var(--white); font-size: 14px; font-weight: 500; }
+  .club-item-stats { font-size: 12px; color: var(--typewriter); white-space: nowrap; }
+
+  /* DASHBOARD */
+  #dashboard-page { display: none; min-height: 100vh; }
+  .dash-header {
+    background: var(--black); height: 60px; padding: 0 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--white); letter-spacing: 3px; display: flex; align-items: center; gap: 8px; }
+  .header-logo-dot { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; margin-bottom: 2px; }
+  .header-period { font-size: 12px; color: var(--typewriter); }
+  .back-btn { background: transparent; border: 1px solid var(--light-ink); color: var(--dark-grey); font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 7px 14px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+  .back-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  .hero { background: var(--ink); padding: 36px 36px 32px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--agile), var(--orange), var(--gold)); }
+  .hero-glow { position: absolute; bottom: -60px; right: -40px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,99,0,0.07) 0%, transparent 65%); pointer-events: none; }
+  .hero-name { font-family: 'Bebas Neue', sans-serif; font-size: 50px; color: var(--white); letter-spacing: 2px; line-height: 1; margin-bottom: 6px; }
+  .hero-sub { font-size: 13px; color: var(--typewriter); }
+  .hero-sub b { color: var(--orange); font-weight: 600; }
+
+  .kpi-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; background: var(--dark-grey); }
+  .kpi { background: var(--white); padding: 26px 28px; }
+  .kpi.accent { background: var(--orange); }
+  .kpi-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--typewriter); margin-bottom: 8px; }
+  .kpi.accent .kpi-lbl { color: rgba(255,255,255,0.65); }
+  .kpi-num { font-family: 'Bebas Neue', sans-serif; font-size: 54px; color: var(--black); line-height: 1; }
+  .kpi.accent .kpi-num { color: var(--white); }
+  .kpi-foot { margin-top: 6px; font-size: 11px; color: var(--dark-grey); display: flex; align-items: center; gap: 6px; }
+  .kpi.accent .kpi-foot { color: rgba(255,255,255,0.55); }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 10px; font-weight: 700; }
+  .badge-up { background: rgba(120,161,0,0.15); color: var(--confirm); }
+  .badge-down { background: rgba(232,28,0,0.1); color: var(--critical); }
+  .badge-mid { background: rgba(255,146,0,0.15); color: var(--gold); }
+  .kpi.accent .badge-up, .kpi.accent .badge-mid { background: rgba(255,255,255,0.2); color: #fff; }
+  .kpi.accent .badge-down { background: rgba(0,0,0,0.15); color: rgba(255,255,255,0.75); }
+
+  .body-wrap { display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 28px 36px; align-items: start; }
+  .section-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--typewriter); margin-bottom: 12px; }
+
+  .team-table-wrap { background: var(--white); border: 1px solid var(--grey); border-radius: 4px; overflow: auto; max-height: 540px; scrollbar-width: thin; scrollbar-color: var(--grey) transparent; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--black); position: sticky; top: 0; z-index: 2; }
+  thead th { padding: 11px 16px; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--typewriter); }
+  thead th:not(:first-child) { text-align: center; }
+  tbody tr { border-bottom: 1px solid var(--grey); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--light-grey); }
+  td { padding: 10px 16px; font-size: 13px; }
+  td.team-nm { font-weight: 500; color: var(--ink); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  td.stat-cell { text-align: center; font-weight: 600; color: var(--dark-grey); }
+  td.stat-cell.active { color: var(--ink); }
+  .hl-bar-wrap { display: flex; align-items: center; gap: 6px; justify-content: center; }
+  .hl-bar { flex: 1; max-width: 60px; height: 3px; background: var(--grey); border-radius: 2px; overflow: hidden; }
+  .hl-bar-fill { height: 100%; background: var(--orange); border-radius: 2px; }
+
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
+  .s-card { background: var(--white); border: 1px solid var(--grey); border-radius: 4px; padding: 20px; }
+  .s-card-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--typewriter); margin-bottom: 16px; }
+
+  .score-wrap { display: flex; align-items: center; gap: 16px; }
+  .ring-svg-wrap { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+  .ring-svg-wrap svg { transform: rotate(-90deg); }
+  .ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-num { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--ink); line-height: 1; }
+  .ring-sub { font-size: 8px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--typewriter); margin-top: 1px; }
+  .score-txt { font-size: 12px; color: var(--light-ink); line-height: 1.55; }
+  .score-txt strong { color: var(--ink); }
+
+  .tt-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--grey); }
+  .tt-item:last-child { border-bottom: none; }
+  .tt-rank { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--dark-grey); width: 22px; text-align: center; flex-shrink: 0; }
+  .tt-rank.gold { color: var(--gold); }
+  .tt-name { font-size: 12px; font-weight: 500; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tt-val { font-size: 13px; font-weight: 700; color: var(--orange); flex-shrink: 0; }
+
+  .bm-row { margin-bottom: 14px; }
+  .bm-row:last-child { margin-bottom: 0; }
+  .bm-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .bm-name { font-size: 12px; color: var(--light-ink); font-weight: 500; }
+  .bm-vals { font-size: 11px; color: var(--typewriter); }
+  .bm-vals b { color: var(--ink); font-weight: 600; }
+  .bm-track { height: 5px; background: var(--grey); border-radius: 3px; position: relative; overflow: visible; }
+  .bm-fill { height: 5px; border-radius: 3px; background: var(--orange); max-width: 100%; }
+  .bm-avg-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--dark-grey); border-radius: 1px; }
+
+  .dash-footer { padding: 18px 36px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--grey); background: var(--white); margin-top: 8px; }
+  .footer-brand { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--dark-grey); letter-spacing: 2px; }
+  .footer-note { font-size: 11px; color: var(--dark-grey); }
+  .pdf-btn { background: var(--orange); color: var(--white); border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 3px; cursor: pointer; transition: background 0.15s; }
+  .pdf-btn:hover { background: var(--agile); }
+
+  @media print {
+    #loading-page, #selector-page { display: none !important; }
+    #dashboard-page { display: block !important; }
+    .dash-header, .back-btn, .pdf-btn { display: none !important; }
+    body { background: white !important; }
+    .hero, .kpi.accent, thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .team-table-wrap { max-height: none !important; overflow: visible !important; }
+    .body-wrap { display: grid !important; grid-template-columns: 1fr 320px !important; }
+    .kpi-strip { display: grid !important; grid-template-columns: repeat(3,1fr) !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-page">
+  <div class="load-logo"><div class="load-dot"></div>HUDL</div>
+  <div class="load-msg" id="load-msg">Loading club data…</div>
+  <div class="load-bar"><div class="load-bar-fill" id="load-fill"></div></div>
+  <div class="load-error" id="load-error">
+    Couldn't load data from Google Sheets.<br>
+    Make sure the sheet is published to the web and try refreshing.
+  </div>
+</div>
+
+<!-- SELECTOR -->
+<div id="selector-page">
+  <div class="sel-logo"><div class="sel-logo-dot"></div>HUDL</div>
+  <div class="sel-title">Club Engagement<br>Reports</div>
+  <div class="sel-sub" id="sel-sub">Loading…</div>
+  <div class="search-box">
+    <input type="text" id="club-search" placeholder="Search club name…" autocomplete="off">
+  </div>
+  <div id="club-list"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard-page">
+  <div class="dash-header">
+    <div class="header-logo"><div class="header-logo-dot"></div>HUDL</div>
+    <div class="header-period">February 2026 Engagement Report</div>
+    <button class="back-btn" id="back-btn">← All Clubs</button>
+  </div>
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-name" id="hero-name">—</div>
+    <div class="hero-sub"><b id="hero-active">0</b> of <b id="hero-total">0</b> teams active this month</div>
+  </div>
+  <div class="kpi-strip">
+    <div class="kpi accent">
+      <div class="kpi-lbl">Playlists Created</div>
+      <div class="kpi-num" id="kpi-pl">0</div>
+      <div class="kpi-foot"><span id="avg-pl-txt">vs. avg —</span>&nbsp;<span class="badge" id="badge-pl"></span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Highlights Created</div>
+      <div class="kpi-num" id="kpi-hl">0</div>
+      <div class="kpi-foot"><span id="avg-hl-txt">vs. avg —</span>&nbsp;<span class="badge" id="badge-hl"></span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Recruitable Athletes</div>
+      <div class="kpi-num" id="kpi-re">0</div>
+      <div class="kpi-foot"><span id="avg-re-txt">vs. avg —</span>&nbsp;<span class="badge" id="badge-re"></span></div>
+    </div>
+  </div>
+  <div class="body-wrap">
+    <div>
+      <div class="section-title">Team Breakdown</div>
+      <div class="team-table-wrap">
+        <table>
+          <thead><tr><th>Team</th><th>Playlists</th><th>Highlights</th><th>Recruitable</th></tr></thead>
+          <tbody id="team-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="s-card">
+        <div class="s-card-title">Engagement Score</div>
+        <div class="score-wrap">
+          <div class="ring-svg-wrap">
+            <svg width="84" height="84" viewBox="0 0 84 84">
+              <circle cx="42" cy="42" r="34" fill="none" stroke="#edf0f2" stroke-width="8"/>
+              <circle id="score-arc" cx="42" cy="42" r="34" fill="none" stroke="#ff6300" stroke-width="8"
+                stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+            </svg>
+            <div class="ring-inner">
+              <div class="ring-num" id="score-num">—</div>
+              <div class="ring-sub">/ 100</div>
+            </div>
+          </div>
+          <div class="score-txt" id="score-txt">—</div>
+        </div>
+      </div>
+      <div class="s-card">
+        <div class="s-card-title">Top Teams — Highlights</div>
+        <div id="top-teams"></div>
+      </div>
+      <div class="s-card">
+        <div class="s-card-title">vs. Network Average</div>
+        <div id="benchmarks"></div>
+      </div>
+    </div>
+  </div>
+  <div class="dash-footer">
+    <div class="footer-brand">HUDL</div>
+    <div class="footer-note">Data reflects February 2026 activity · Confidential</div>
+    <button class="pdf-btn" id="pdf-btn">Download PDF</button>
+  </div>
+</div>
+
+<script>
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4qOPe-PwdT7IEq82g8yKRBb-wB35EWE74g2ynWcbN6uOmNYPWYFszY8xDFEyeUJVCR9uC2d_edEI/pub?gid=0&single=true&output=csv';
+
+let CLUBS = {}, AVG = { pl: 0, hl: 0, re: 0 };
+
+// ── CSV parser (handles quoted fields) ──
+function parseCSV(text) {
+  return text.split('\n').map(line => {
+    const row = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { row.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    row.push(cur.trim());
+    return row;
+  }).filter(r => r.some(c => c));
+}
+
+// ── Auto-detect columns from header ──
+function detectCols(header) {
+  const h = header.map(c => c.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  const find = (...terms) => h.findIndex(c => terms.some(t => c.includes(t)));
+  return {
+    org_name:    find('orgname', 'org_name', 'club'),
+    org_id:      find('orgid', 'org_id'),
+    team_name:   find('teamname', 'team_name'),
+    team_id:     find('teamid', 'team_id'),
+    playlists:   find('playlist'),
+    highlights:  find('highlight'),
+    recruitable: find('recruit'),
+  };
+}
+
+// ── Build club map from parsed rows ──
+function buildClubs(rows) {
+  if (rows.length < 2) return {};
+  const cols = detectCols(rows[0]);
+  const clubs = {};
+  let currentClub = null;
+
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const get = k => (cols[k] >= 0 && cols[k] < r.length) ? r[cols[k]] : '';
+    const orgName    = get('org_name');
+    const orgId      = get('org_id');
+    const teamName   = get('team_name');
+    const teamId     = get('team_id');
+    const playlists  = parseInt(get('playlists'))   || 0;
+    const highlights = parseInt(get('highlights'))  || 0;
+    const recruitable= parseInt(get('recruitable')) || 0;
+
+    // Club total row
+    if (orgName && orgName.endsWith('Total') && !teamName && !orgId) {
+      const cn = orgName.replace(/ Total$/, '').trim();
+      if (clubs[cn]) { clubs[cn].playlists = playlists; clubs[cn].highlights = highlights; clubs[cn].recruitable = recruitable; }
+      continue;
+    }
+    // New club header row
+    if (orgName && orgId && !orgName.endsWith('Total')) {
+      currentClub = orgName;
+      if (!clubs[currentClub]) clubs[currentClub] = { teams: [], playlists: 0, highlights: 0, recruitable: 0 };
+    }
+    // Team row
+    if (teamName && teamId && !teamName.includes('Total') && !teamId.includes('Total') && currentClub && clubs[currentClub]) {
+      clubs[currentClub].teams.push({ name: teamName, playlists, highlights, recruitable });
+    }
+  }
+  return clubs;
+}
+
+// ── Averages ──
+function computeAvg(clubs) {
+  const pl = [], hl = [], re = [];
+  for (const d of Object.values(clubs)) {
+    if (d.playlists   > 0) pl.push(d.playlists);
+    if (d.highlights  > 0) hl.push(d.highlights);
+    if (d.recruitable > 0) re.push(d.recruitable);
+  }
+  const avg = a => a.length ? Math.round(a.reduce((x,y) => x+y, 0) / a.length) : 0;
+  return { pl: avg(pl), hl: avg(hl), re: avg(re) };
+}
+
+// ── Load ──
+async function loadData() {
+  const fill = document.getElementById('load-fill');
+  fill.style.width = '20%';
+  try {
+    const res = await fetch(SHEET_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    fill.style.width = '60%';
+    const text = await res.text();
+    const rows = parseCSV(text);
+    fill.style.width = '85%';
+    CLUBS = buildClubs(rows);
+    AVG   = computeAvg(CLUBS);
+    fill.style.width = '100%';
+    setTimeout(showSelector, 300);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('load-msg').textContent = 'Failed to load';
+    document.getElementById('load-error').style.display = 'block';
+  }
+}
+
+function showSelector() {
+  document.getElementById('loading-page').style.display = 'none';
+  document.getElementById('selector-page').style.display = 'flex';
+  const n = Object.keys(CLUBS).length;
+  document.getElementById('sel-sub').innerHTML = `Live from Google Sheets &nbsp;·&nbsp; <b>${n} clubs</b>`;
+  renderList('');
+}
+
+// ── Selector ──
+function renderList(q) {
+  const list = document.getElementById('club-list');
+  const hits = Object.entries(CLUBS)
+    .filter(([n]) => n.toLowerCase().includes(q.toLowerCase()))
+    .sort((a,b) => a[0].localeCompare(b[0]))
+    .slice(0, 80);
+  list.innerHTML = hits.map(([name, d]) =>
+    `<div class="club-item" data-club="${encodeURIComponent(name)}">
+      <span class="club-item-name">${name}</span>
+      <span class="club-item-stats">${d.teams.length} teams · ${d.highlights.toLocaleString()} highlights</span>
+    </div>`
+  ).join('') || '<div style="padding:16px 20px;color:#4e5d6c;font-size:13px;">No clubs found</div>';
+}
+
+document.getElementById('club-search').addEventListener('input', e => renderList(e.target.value));
+document.getElementById('club-list').addEventListener('click', e => {
+  const item = e.target.closest('.club-item');
+  if (item) showDashboard(decodeURIComponent(item.dataset.club));
+});
+document.getElementById('back-btn').addEventListener('click', () => {
+  document.getElementById('dashboard-page').style.display = 'none';
+  document.getElementById('selector-page').style.display = 'flex';
+});
+document.getElementById('pdf-btn').addEventListener('click', () => {
+  // Ensure dashboard is explicitly visible before print dialog opens
+  document.getElementById('loading-page').style.cssText = 'display:none!important';
+  document.getElementById('selector-page').style.cssText = 'display:none!important';
+  document.getElementById('dashboard-page').style.cssText = 'display:block!important';
+  setTimeout(() => window.print(), 150);
+});
+
+// ── Badge ──
+function badge(val, avg) {
+  if (!avg) return ['badge-mid', '—'];
+  const pct = Math.round(((val - avg) / avg) * 100);
+  if (val >= avg * 1.1) return ['badge-up', `↑ ${pct}% above avg`];
+  if (val <  avg * 0.5) return ['badge-down', `↓ ${Math.abs(pct)}% below avg`];
+  return ['badge-mid', 'Near avg'];
+}
+
+// ── Score ──
+function score(d) {
+  return Math.round(
+    Math.min(d.playlists   / (AVG.pl * 3 || 1), 1) * 35 +
+    Math.min(d.highlights  / (AVG.hl * 3 || 1), 1) * 40 +
+    Math.min(d.recruitable / (AVG.re * 3 || 1), 1) * 25
+  );
+}
+
+// ── Dashboard ──
+function showDashboard(name) {
+  const d = CLUBS[name]; if (!d) return;
+  document.getElementById('selector-page').style.display = 'none';
+  document.getElementById('dashboard-page').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  document.getElementById('hero-name').textContent = name;
+  const active = d.teams.filter(t => t.playlists > 0 || t.highlights > 0).length;
+  document.getElementById('hero-active').textContent = active;
+  document.getElementById('hero-total').textContent = d.teams.length;
+
+  document.getElementById('kpi-pl').textContent = d.playlists.toLocaleString();
+  document.getElementById('kpi-hl').textContent = d.highlights.toLocaleString();
+  document.getElementById('kpi-re').textContent = d.recruitable.toLocaleString();
+  document.getElementById('avg-pl-txt').textContent = `vs. avg ${AVG.pl}`;
+  document.getElementById('avg-hl-txt').textContent = `vs. avg ${AVG.hl}`;
+  document.getElementById('avg-re-txt').textContent = `vs. avg ${AVG.re}`;
+
+  [['pl', d.playlists, AVG.pl], ['hl', d.highlights, AVG.hl], ['re', d.recruitable, AVG.re]].forEach(([id, val, avg]) => {
+    const [cls, txt] = badge(val, avg);
+    const el = document.getElementById('badge-' + id);
+    el.className = 'badge ' + cls; el.textContent = txt;
+  });
+
+  const maxHl = Math.max(...d.teams.map(t => t.highlights), 1);
+  const sorted = [...d.teams].sort((a,b) => (b.highlights + b.playlists) - (a.highlights + a.playlists));
+  document.getElementById('team-tbody').innerHTML = sorted.map(t => {
+    const pct = Math.round((t.highlights / maxHl) * 100);
+    const hasPl = t.playlists > 0, hasHl = t.highlights > 0, hasRe = t.recruitable > 0;
+    return `<tr>
+      <td class="team-nm" title="${t.name}">${t.name}</td>
+      <td class="stat-cell ${hasPl?'active':''}">${hasPl ? t.playlists : '—'}</td>
+      <td class="stat-cell ${hasHl?'active':''}">
+        <div class="hl-bar-wrap"><span>${hasHl ? t.highlights : '—'}</span>
+          ${hasHl ? `<div class="hl-bar"><div class="hl-bar-fill" style="width:${pct}%"></div></div>` : ''}
+        </div>
+      </td>
+      <td class="stat-cell ${hasRe?'active':''}">${hasRe ? t.recruitable : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const s = score(d);
+  document.getElementById('score-num').textContent = s;
+  const arc = document.getElementById('score-arc');
+  arc.style.transition = 'none';
+  arc.style.strokeDashoffset = 213.6;
+  arc.style.stroke = s >= 60 ? '#78a100' : s >= 30 ? '#ff6300' : '#4e5d6c';
+  requestAnimationFrame(() => {
+    arc.style.transition = 'stroke-dashoffset 0.8s ease';
+    arc.style.strokeDashoffset = 213.6 - (s / 100) * 213.6;
+  });
+  document.getElementById('score-txt').innerHTML =
+    s >= 70 ? '<strong>Excellent!</strong> Top performer in the network.' :
+    s >= 40 ? '<strong>Good engagement.</strong> Encourage more teams to create highlights.' :
+              '<strong>Room to grow.</strong> More activity will boost visibility.';
+
+  const top = [...d.teams].sort((a,b) => b.highlights - a.highlights).slice(0, 5);
+  document.getElementById('top-teams').innerHTML = top.map((t, i) =>
+    `<div class="tt-item">
+      <div class="tt-rank ${i===0?'gold':''}">${i+1}</div>
+      <div class="tt-name" title="${t.name}">${t.name}</div>
+      <div class="tt-val">${t.highlights}</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('benchmarks').innerHTML = [
+    { name: 'Playlists',   val: d.playlists,   avg: AVG.pl },
+    { name: 'Highlights',  val: d.highlights,  avg: AVG.hl },
+    { name: 'Recruitable', val: d.recruitable, avg: AVG.re },
+  ].map(m => {
+    const max = Math.max(m.val, m.avg) * 1.25 || 1;
+    return `<div class="bm-row">
+      <div class="bm-top"><span class="bm-name">${m.name}</span><span class="bm-vals"><b>${m.val.toLocaleString()}</b> vs avg ${m.avg}</span></div>
+      <div class="bm-track">
+        <div class="bm-fill" style="width:${Math.min((m.val/max)*100,100)}%"></div>
+        <div class="bm-avg-tick" style="left:${Math.min((m.avg/max)*100,100)}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+loadData();
+</script>
+</body>
+</html>
