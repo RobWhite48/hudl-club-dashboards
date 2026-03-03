@@ -326,7 +326,10 @@ function buildClubs(rows) {
     const highlights = parseInt(get('highlights'))  || 0;
     const recruitable= parseInt(get('recruitable')) || 0;
 
-    // Club total row
+    // Skip per-team subtotal rows (new format: '13-1 Total', '14 Red Total', etc)
+    if (teamName && teamName.endsWith(' Total')) continue;
+
+    // Club total row: org_name ends with 'Total', no team, no org_id
     if (orgName && orgName.endsWith('Total') && !teamName && !orgId) {
       const cn = orgName.replace(/ Total$/, '').trim();
       if (clubs[cn]) { clubs[cn].playlists = playlists; clubs[cn].highlights = highlights; clubs[cn].recruitable = recruitable; }
@@ -337,8 +340,8 @@ function buildClubs(rows) {
       currentClub = orgName;
       if (!clubs[currentClub]) clubs[currentClub] = { teams: [], playlists: 0, highlights: 0, recruitable: 0 };
     }
-    // Team row
-    if (teamName && teamId && !teamName.includes('Total') && !teamId.includes('Total') && currentClub && clubs[currentClub]) {
+    // Team row: real team, not a subtotal
+    if (teamName && teamId && !teamName.endsWith(' Total') && currentClub && clubs[currentClub]) {
       clubs[currentClub].teams.push({ name: teamName, playlists, highlights, recruitable });
     }
   }
