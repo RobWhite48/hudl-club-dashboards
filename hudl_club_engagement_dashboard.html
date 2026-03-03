@@ -274,7 +274,7 @@
 </div>
 
 <script>
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4qOPe-PwdT7IEq82g8yKRBb-wB35EWE74g2ynWcbN6uOmNYPWYFszY8xDFEyeUJVCR9uC2d_edEI/pub?gid=0&single=true&output=csv';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzIB0cbFaMc53N8JhSM_9YkBQVKecyAS2DRAdwTxuJ80cbIk-OA796HXt86P_gEzm2wCw/exec';
 
 let CLUBS = {}, AVG = { pl: 0, hl: 0, re: 0 };
 
@@ -365,7 +365,7 @@ async function loadData() {
   const fill = document.getElementById('load-fill');
   fill.style.width = '20%';
   try {
-    const res = await fetch(SHEET_URL);
+    const res = await fetch(SHEET_URL, { redirect: 'follow' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     fill.style.width = '60%';
     const text = await res.text();
