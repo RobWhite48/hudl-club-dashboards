@@ -329,38 +329,113 @@ function detectCols(header) {
 function buildClubs(rows) {
   if (rows.length < 2) return {};
   const cols = detectCols(rows[0]);
-  const clubs = {};
-  let currentClub = null;
+
+  // First pass: collect every unique (resolvedOrgName, orgId) pair.
+  // Key insight: org_id appears in col C on BOTH normal rows and secondary org blocks.
+  // A new org block starts whenever org_id changes to a new numeric value.
+  // org_name may be blank on secondary blocks — inherit from last seen org_name.
+  let lastOrgName = null;
+  const allPairs = [];
+  const seenOrgIds = new Set();
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const get = k => (cols[k] >= 0 && cols[k] < r.length) ? r[cols[k]] : '';
+    const orgName = get('org_name');
+    const orgId   = get('org_id');
+    if (orgName && !orgName.endsWith('Total')) lastOrgName = orgName;
+    if (orgId && /^\d+$/.test(orgId) && lastOrgName && !seenOrgIds.has(orgId)) {
+      seenOrgIds.add(orgId);
+      allPairs.push({ orgName: lastOrgName, orgId });
+    }
+  }
+
+  // Count how many distinct org_ids share each name (for disambiguation)
+  const nameCounts = {};
+  for (const { orgName } of allPairs) {
+    nameCounts[orgName] = (nameCounts[orgName] || 0) + 1;
+  }
+
+  // Second pass: build entries
+  const byOrgId = {};
+  const orgIdByName = {};
+  let currentOrgId = null;
+  lastOrgName = null;
 
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     const get = k => (cols[k] >= 0 && cols[k] < r.length) ? r[cols[k]] : '';
-    const orgName    = get('org_name');
-    const orgId      = get('org_id');
-    const teamName   = get('team_name');
-    const teamId     = get('team_id');
-    const playlists  = parseInt(get('playlists'))   || 0;
-    const highlights = parseInt(get('highlights'))  || 0;
-    const recruitable= parseInt(get('recruitable')) || 0;
+    const orgName     = get('org_name');
+    const orgId       = get('org_id');
+    const teamName    = get('team_name');
+    const teamId      = get('team_id');
+    const playlists   = parseInt(get('playlists'))   || 0;
+    const highlights  = parseInt(get('highlights'))  || 0;
+    const recruitable = parseInt(get('recruitable')) || 0;
 
-    // Skip per-team subtotal rows (new format: '13-1 Total', '14 Red Total', etc)
+    if (orgName && !orgName.endsWith('Total')) lastOrgName = orgName;
+
+    // Skip per-team subtotal rows
     if (teamName && teamName.endsWith(' Total')) continue;
 
-    // Club total row: org_name ends with 'Total', no team, no org_id
-    if (orgName && orgName.endsWith('Total') && !teamName && !orgId) {
-      const cn = orgName.replace(/ Total$/, '').trim();
-      if (clubs[cn]) { clubs[cn].playlists = playlists; clubs[cn].highlights = highlights; clubs[cn].recruitable = recruitable; }
+    // Org-level total: org_id col contains "12345 Total"
+    if (orgId && orgId.includes(' Total') && !teamName) {
+      const baseId = orgId.replace(' Total', '').trim();
+      if (byOrgId[baseId]) {
+        byOrgId[baseId].playlists   = playlists;
+        byOrgId[baseId].highlights  = highlights;
+        byOrgId[baseId].recruitable = recruitable;
+      }
       continue;
     }
-    // New club header row
-    if (orgName && orgId && !orgName.endsWith('Total')) {
-      currentClub = orgName;
-      if (!clubs[currentClub]) clubs[currentClub] = { teams: [], playlists: 0, highlights: 0, recruitable: 0 };
+
+    // Club-level total: org_name ends with 'Total', no org_id, no team
+    if (orgName && orgName.endsWith('Total') && !orgId && !teamName) {
+      const baseName = orgName.replace(/ Total$/, '').trim();
+      const ids = orgIdByName[baseName];
+      if (ids && ids.length > 0) {
+        const lastId = ids[ids.length - 1];
+        if (byOrgId[lastId]) {
+          byOrgId[lastId].playlists   = playlists;
+          byOrgId[lastId].highlights  = highlights;
+          byOrgId[lastId].recruitable = recruitable;
+        }
+      }
+      continue;
     }
-    // Team row: real team, not a subtotal
-    if (teamName && teamId && !teamName.endsWith(' Total') && currentClub && clubs[currentClub]) {
-      clubs[currentClub].teams.push({ name: teamName, playlists, highlights, recruitable });
+
+    // New org block: whenever org_id is a new numeric value we haven't seen yet,
+    // OR org_name is explicitly present (handles first team on same row as org header)
+    if (orgId && /^\d+$/.test(orgId) && !byOrgId[orgId]) {
+      const resolvedName = (orgName && !orgName.endsWith('Total')) ? orgName : lastOrgName;
+      if (resolvedName) {
+        currentOrgId = orgId;
+        const isDupe = nameCounts[resolvedName] > 1;
+        const displayName = isDupe ? `${resolvedName} (${orgId})` : resolvedName;
+        byOrgId[currentOrgId] = { displayName, orgId, teams: [], playlists: 0, highlights: 0, recruitable: 0 };
+        if (!orgIdByName[resolvedName]) orgIdByName[resolvedName] = [];
+        orgIdByName[resolvedName].push(orgId);
+      }
+    } else if (orgId && /^\d+$/.test(orgId) && byOrgId[orgId]) {
+      // Already registered — just switch currentOrgId to this one
+      currentOrgId = orgId;
     }
+
+    // Team row: add to current org
+    if (teamName && teamId && !teamName.endsWith(' Total') && currentOrgId && byOrgId[currentOrgId]) {
+      byOrgId[currentOrgId].teams.push({ name: teamName, playlists, highlights, recruitable });
+    }
+  }
+
+  // Convert to display-name-keyed map
+  const clubs = {};
+  for (const entry of Object.values(byOrgId)) {
+    clubs[entry.displayName] = {
+      orgId: entry.orgId,
+      teams: entry.teams,
+      playlists: entry.playlists,
+      highlights: entry.highlights,
+      recruitable: entry.recruitable,
+    };
   }
   return clubs;
 }
@@ -438,14 +513,18 @@ function showSelector() {
 // ── Selector ──
 function renderList(q) {
   const list = document.getElementById('club-list');
+  const ql = q.toLowerCase();
   const hits = Object.entries(CLUBS)
-    .filter(([n]) => n.toLowerCase().includes(q.toLowerCase()))
+    .filter(([name, d]) =>
+      name.toLowerCase().includes(ql) ||
+      (d.orgId && d.orgId.toString().includes(ql))
+    )
     .sort((a,b) => a[0].localeCompare(b[0]))
-    .slice(0, 80);
+    .slice(0, 150);
   list.innerHTML = hits.map(([name, d]) =>
     `<div class="club-item" data-club="${encodeURIComponent(name)}">
       <span class="club-item-name">${name}</span>
-      <span class="club-item-stats">${d.teams.length} teams · ${d.highlights.toLocaleString()} highlights</span>
+      <span class="club-item-stats">${d.orgId} · ${d.teams.length} teams · ${d.highlights.toLocaleString()} highlights</span>
     </div>`
   ).join('') || '<div style="padding:12px 16px;color:#4e5d6c;font-size:13px;">No clubs found</div>';
 }
